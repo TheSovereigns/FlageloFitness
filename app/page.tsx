@@ -486,7 +486,7 @@ export default function DashboardPage() {
           <NavButton icon={Calculator} label={t("nav_diet")} active={currentView === "planner"} onClick={() => setCurrentView("planner")} />
           <NavButton icon={ChefHat} label={t("nav_recipes")} active={currentView === "recipes"} onClick={() => setCurrentView("recipes")} />
           <NavButton icon={ShoppingBag} label={t("nav_store")} active={currentView === "store"} onClick={() => setCurrentView("store")} />
-          <NavButton icon={Bot} label={t("nav_aichat")} active={currentView === "chatbot")} onClick={() => setCurrentView("chatbot")} />
+          <NavButton icon={Bot} label={t("nav_aichat")} active={currentView === "chatbot"} onClick={() => setCurrentView("chatbot")} />
         </nav>
 
         <div className="p-2 lg:p-3 mb-3 lg:mb-4 space-y-2 border-t border-white/10 pt-4 flex flex-col items-center">

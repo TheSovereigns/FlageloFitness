@@ -48,10 +48,9 @@ import { toast } from "sonner";
 import { Toaster } from "sonner";
 
 // Inicialização do cliente Supabase
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-);
+const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || ''
+const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || ''
+const supabase = supabaseUrl && supabaseAnonKey ? createClient(supabaseUrl, supabaseAnonKey) : null
 
 // Componente de Barra de Gráfico Simples
 function ChartBar({ height, color, label }: { height: string; color: string; label: string }) {
@@ -89,6 +88,11 @@ export function AdminDashboard() {
   // Efeito para buscar dados da API ao carregar o componente
   useEffect(() => {
     const fetchUsers = async () => {
+      if (!supabase) {
+        setIsLoading(false);
+        return;
+      }
+
       try {
         setIsLoading(true);
         

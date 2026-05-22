@@ -21,10 +21,12 @@ const SYSTEM_PROMPT_EN = 'You are FitVerse AI, an assistant specialized in fitne
 async function verifyAdmin(): Promise<boolean> {
   const cookieStore = cookies()
   const token = cookieStore.get('sb-access-token')
-  if (!token || !supabaseAdmin) return false
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || ''
+
+  if (!token || !supabaseAdmin || !supabaseUrl) return false
 
   const supabaseClient = createClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL ?? '',
+    supabaseUrl,
     token.value
   )
 

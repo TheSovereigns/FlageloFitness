@@ -9,10 +9,9 @@ const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
 });
 
 // Inicializa o Supabase com permissões de Admin (Service Role)
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!
-);
+const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || ''
+const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY || ''
+const supabase = supabaseUrl && supabaseServiceKey ? createClient(supabaseUrl, supabaseServiceKey) : null
 
 // Eventos que queremos escutar
 const relevantEvents = new Set([
@@ -64,6 +63,10 @@ export async function POST(req: Request) {
 // Função para lidar com nova assinatura/compra
 async function handleCheckoutSession(session: Stripe.Checkout.Session) {
   if (!session.customer_email) return;
+  if (!supabase) {
+    console.warn('Supabase não configurado; pulando atualização de usuário/pagamento.')
+    return;
+  }
 
   // Tenta pegar o nome do plano dos metadados (configure isso no produto do Stripe)
   // Ou define um padrão caso não venha
@@ -103,6 +106,10 @@ async function handleCheckoutSession(session: Stripe.Checkout.Session) {
 // Função para lidar com renovações de assinatura (pagamentos recorrentes)
 async function handleInvoicePayment(invoice: Stripe.Invoice) {
   if (!invoice.customer_email) return;
+  if (!supabase) {
+    console.warn('Supabase não configurado; pulando registro de fatura.')
+    return;
+  }
 
   // Apenas registra o pagamento para manter o histórico financeiro atualizado
   const { error } = await supabase

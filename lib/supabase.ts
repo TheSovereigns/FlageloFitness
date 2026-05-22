@@ -16,45 +16,83 @@ if (!supabaseUrl || !supabaseAnonKey) {
   )
 }
 
-// Client-side Supabase client (public, with anon key)
-export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
-  auth: {
-    autoRefreshToken: true,
-    persistSession: true,
-    detectSessionInUrl: true,
-    // Configure the storage adapter for Next.js
-    storage: {
-      getItem: (key: string) => {
-        if (typeof window === 'undefined') return null
-        try {
-          return localStorage.getItem(key)
-        } catch {
-          return null
-        }
-      },
-      setItem: (key: string, value: string) => {
-        if (typeof window === 'undefined') return
-        try {
-          localStorage.setItem(key, value)
-        } catch {
-          // Ignore storage errors
-        }
-      },
-      removeItem: (key: string) => {
-        if (typeof window === 'undefined') return
-        try {
-          localStorage.removeItem(key)
-        } catch {
-          // Ignore storage errors
-        }
-      },
+function createNoopSupabaseClient() {
+  const noop = async () => ({
+    data: null,
+    error: null,
+    count: 0,
+    status: 200,
+    statusText: '',
+    subscription: { unsubscribe: () => {} },
+  })
+
+  const handler: ProxyHandler<any> = {
+    get(target, prop) {
+      if (prop === 'then') return undefined
+      if (prop === 'auth') {
+        return new Proxy({}, {
+          get() {
+            return async () => ({ data: { user: null, session: null }, error: null })
+          },
+        })
+      }
+      if (prop === 'from' || prop === 'rpc' || prop === 'channel') {
+        return () => new Proxy(noop, handler)
+      }
+      if (prop === 'onAuthStateChange') {
+        return () => ({ data: null, error: null, subscription: { unsubscribe: () => {} } })
+      }
+      return new Proxy(noop, handler)
     },
-  },
-})
+    apply() {
+      return Promise.resolve({ data: null, error: null, count: 0, status: 200, statusText: '', subscription: { unsubscribe: () => {} } })
+    },
+  }
+
+  return new Proxy(noop, handler)
+}
+
+// Client-side Supabase client (public, with anon key)
+export const supabase = supabaseUrl && supabaseAnonKey
+  ? createClient(supabaseUrl, supabaseAnonKey, {
+      auth: {
+        autoRefreshToken: true,
+        persistSession: true,
+        detectSessionInUrl: true,
+        // Configure the storage adapter for Next.js
+        storage: {
+          getItem: (key: string) => {
+            if (typeof window === 'undefined') return null
+            try {
+              return localStorage.getItem(key)
+            } catch {
+              return null
+            }
+          },
+          setItem: (key: string, value: string) => {
+            if (typeof window === 'undefined') return
+            try {
+              localStorage.setItem(key, value)
+            } catch {
+              // Ignore storage errors
+            }
+          },
+          removeItem: (key: string) => {
+            if (typeof window === 'undefined') return
+            try {
+              localStorage.removeItem(key)
+            } catch {
+              // Ignore storage errors
+            }
+          },
+        },
+      },
+    })
+  : createNoopSupabaseClient()
 
 // Server-side Supabase client (with service role key - for admin operations)
 // This should only be used in server-side code (API routes, server components)
-export const supabaseAdmin = supabaseServiceKey
+export const supabaseAdmin = supabaseUrl && supabaseServiceKey
   ? createClient(supabaseUrl, supabaseServiceKey, {
       auth: {
         autoRefreshToken: false,
